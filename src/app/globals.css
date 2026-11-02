@@ -1,0 +1,326 @@
+@import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #FFFFFF;
+  --paper-2: #FAFAFA;
+  --ink: #111111;
+  --ink-2: #2A2A2A;
+  /* Matches tailwind.config.ts's `stone` color exactly — see the comment
+     there for why this is a neutral gray rather than the old warm taupe. */
+  --stone: #6B6B6B;
+  --line: #EAEAEA;
+  --green: #6FAF83;
+  --green-dark: #5B9A70;
+  /* Only two fonts site-wide: Satoshi (--font-display, loaded via the
+     Fontshare @import above) for headings/hero/buttons/important labels,
+     and this plain system sans-serif stack — no webfont file at all — for
+     everything else. `--font-mono` and `--font-highlight` are both aliased
+     below rather than loading separate webfonts — `--font-mono` to the
+     body stack (prices, table headers), `--font-highlight` to the display
+     font (small uppercase eyebrow labels read as heading-adjacent, not
+     body copy) — so no third/fourth font is ever introduced. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-sans);
+  --font-display: "Satoshi";
+  --font-highlight: var(--font-display);
+
+  /* One source for the iOS notch/Dynamic Island/home-indicator insets —
+     every fixed/absolute element that sits at a screen edge (Header,
+     MobileNav, CartDrawer, AuthModal) reads these instead of repeating
+     env(...) calls. Only resolve to a nonzero value when layout.tsx's
+     `viewport-fit=cover` is in effect; the `0px` fallback keeps every
+     consumer safe on browsers/contexts where that's not the case. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  /* Header's unscrolled mobile height: 16px top padding + 45px logo + 3px
+     bottom padding. Pages whose first content must never sit underneath the
+     fixed header use this measured clearance rather than a guessed margin. */
+  --header-clearance: calc(var(--safe-top) + 72px + 1px);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+html {
+  scroll-behavior: smooth;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img, video, canvas, svg {
+  max-width: 100%;
+}
+
+img, video {
+  height: auto;
+}
+
+/* iOS Safari zooms the whole page in when a focused text input's computed
+   font-size is under 16px — several form inputs sitewide (the AuthModal
+   login/register fields, the admin login form) render at 14px/13px for
+   visual density. Scoped to the mobile tier only (so desktop typography is
+   untouched) and to form controls only, this is the single, sitewide fix
+   rather than bumping font-size in every individual component — every
+   affected input already has a fixed height (h-14, h-[58px], etc.) with
+   plenty of room for 16px text, so this is a zero-layout-risk change. */
+@media (max-width: 767px) {
+  input, textarea, select { font-size: 16px; }
+}
+
+/* Minimum comfortable touch target (WCAG 2.5.5 / Apple HIG's ~44px
+   guidance) for icon-only controls that would otherwise be sized to just
+   their glyph (e.g. Header's menu/search/wishlist/cart icons, modal close
+   buttons). Grows the hit area via padding, never the icon itself — apply
+   alongside the existing icon/size classes, not instead of them. */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Global typography system — every heading defaults to the display font,
+   every other piece of body/interface content (including form controls,
+   which don't inherit font-family from the page by default) defaults to
+   the plain sans-serif stack. Both are element-selector rules (the
+   lowest-specificity kind), so any component that already sets its own
+   font — the `.display`/`font-display` utility, an inline style, a
+   `.prose-content` heading — still wins over this without needing !important
+   or per-component opt-outs; this is purely the site-wide fallback. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), sans-serif;
+}
+
+body, p, span, div, li, input, textarea, select {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+::selection { background: var(--ink); color: var(--paper); }
+
+@layer components {
+  .eyebrow {
+    font-family: var(--font-highlight), sans-serif;
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--stone);
+  }
+  /* Green accent label — used for the small uppercase tags on the homepage
+     hero/promo panels (on white cards) and their inverse for text sitting
+     over a photo + gradient overlay, where the plain green reads too dark
+     against a dark scrim. */
+  .eyebrow-accent { font-family: var(--font-highlight), sans-serif; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--green); }
+  .eyebrow-accent-invert { font-family: var(--font-highlight), sans-serif; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #57bc74; }
+  .display { font-family: var(--font-display), sans-serif; font-weight: 700; line-height: 0.92; letter-spacing: -0.02em; text-transform: uppercase; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 500; letter-spacing: 0; text-transform: none;
+    padding: 14px 28px; border: 1px solid var(--ink); border-radius: 9999px;
+    background: var(--ink); color: var(--paper); position: relative; overflow: hidden;
+    transition: color .5s cubic-bezier(.22,1,.36,1), transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s cubic-bezier(.22,1,.36,1);
+  }
+  .btn > * { position: relative; z-index: 2; }
+  .btn::after { content:""; position:absolute; inset:0; background:var(--paper); transform:translateY(101%); transition:transform .5s cubic-bezier(.22,1,.36,1); z-index:1; }
+  .btn:hover { color: var(--ink); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(17,17,17,0.1); }
+  .btn:hover::after { transform: translateY(0); }
+
+  /* Secondary CTA — solid green pill (matches the reference's secondary-
+     button treatment) rather than the old transparent/outline style, so
+     every call site that already pairs `.btn .btn-ghost` (hero, search
+     overlay, etc.) picks up the new look with no per-file changes. */
+  .btn-ghost {
+    background: var(--green); color: #fff; border-color: var(--green);
+  }
+  .btn-ghost::after { background: var(--green-dark); }
+  .btn-ghost:hover { color: #fff; border-color: var(--green-dark); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(111,175,131,0.28); }
+
+  /* Inverted CTA — for a button sitting directly on a photo/dark overlay
+     (e.g. the homepage "On Stage / Off Script" promo banner) rather than on
+     a plain paper background: starts transparent with a white border/text,
+     fills white on hover (same slide-up ::after mechanic as .btn), text
+     flips to ink, and gets a slight scale lift per the "premium hover"
+     spec — .btn's own translateY lift stays, this just adds scale on top. */
+  .btn-invert {
+    background: transparent; color: #fff; border-color: rgba(255,255,255,0.7);
+  }
+  .btn-invert::after { background: #fff; }
+  .btn-invert:hover {
+    color: var(--ink); border-color: #fff;
+    transform: translateY(-1px) scale(1.04);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+  }
+
+  /* Imported WordPress/WooCommerce content (blog posts, static pages,
+     product descriptions) — no typography plugin in this project, so
+     spacing/hierarchy for raw HTML is set here rather than pulling one in
+     for a handful of rules. Rendered exclusively through <RichContent />
+     (src/components/RichContent.tsx) so every consumer shares this one
+     typography system instead of duplicating styles per content type. */
+  .prose-content {
+    color: var(--ink-2);
+    font-size: 15px;
+    line-height: 1.8;
+    /* Defensive: this renders arbitrary imported HTML (product
+       descriptions, blog posts) via dangerouslySetInnerHTML — a long
+       unbroken string (URL, code, etc.) could otherwise force horizontal
+       overflow on a narrow phone screen. .prose-content table below already
+       handles wide tables via its own horizontal scroll; this covers
+       everything else. */
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .prose-content > * + * { margin-top: 1.4em; }
+
+  .prose-content p { margin: 0; }
+  .prose-content strong, .prose-content b { color: var(--ink); font-weight: 700; }
+  .prose-content em, .prose-content i { font-style: italic; }
+  .prose-content mark { background: var(--paper-2); color: var(--ink); padding: 0.05em 0.3em; border-radius: 2px; }
+  .prose-content small { font-size: 0.85em; color: var(--stone); }
+  .prose-content sub, .prose-content sup { font-size: 0.75em; }
+
+  /* Headings double as section dividers within a short product description
+     ("Product Features", "Condition", "Shipping") as much as they structure
+     a long-form blog post — sized/weighted so both read well. h4-h6 read as
+     small caps labels (matching .eyebrow elsewhere in the app) rather than
+     shrinking display type past the point of being legible as a heading. */
+  .prose-content h1, .prose-content h2, .prose-content h3,
+  .prose-content h4, .prose-content h5, .prose-content h6 {
+    font-family: var(--font-display), sans-serif; font-weight: 700; line-height: 1.2;
+    color: var(--ink); margin-top: 2em; margin-bottom: 0.65em;
+  }
+  .prose-content h1 { font-size: 1.7em; }
+  .prose-content h2 { font-size: 1.3em; padding-bottom: 0.55em; border-bottom: 1px solid var(--line); }
+  .prose-content h3 { font-size: 1.1em; }
+  .prose-content h4, .prose-content h5, .prose-content h6 {
+    font-size: 0.8em; letter-spacing: 0.14em; text-transform: uppercase; color: var(--stone);
+  }
+
+  /* Feature-list treatment — a round dot marker instead of the browser's
+     default disc, generous spacing between items, matching how premium
+     fashion e-commerce PDPs lay out bullet-point specs. */
+  .prose-content ul { list-style: none; padding-left: 0; }
+  .prose-content ul > li { position: relative; padding-left: 1.4em; }
+  .prose-content ul > li::before {
+    content: ""; position: absolute; left: 0.1em; top: 0.7em;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--ink);
+  }
+  .prose-content ol { list-style: decimal; padding-left: 1.3em; }
+  .prose-content ol > li { padding-left: 0.35em; }
+  .prose-content li + li { margin-top: 0.65em; }
+  .prose-content li > ul, .prose-content li > ol { margin-top: 0.65em; }
+
+  .prose-content a {
+    color: var(--ink); text-decoration: underline; text-underline-offset: 3px;
+    text-decoration-color: var(--line); transition: text-decoration-color 0.2s ease;
+  }
+  .prose-content a:hover { text-decoration-color: var(--ink); }
+
+  .prose-content blockquote {
+    border-left: 2px solid var(--ink); padding: 0.1em 0 0.1em 1.3em;
+    color: var(--stone); font-style: italic;
+  }
+
+  .prose-content hr { border: none; border-top: 1px solid var(--line); margin: 2em 0; }
+
+  /* Responsive, lazy-loaded, never overflowing — every <img> that survives
+     sanitizeContentHtml() (which already strips anything but src/alt/
+     width/height/loading) gets this treatment automatically. */
+  .prose-content img {
+    display: block; max-width: 100%; height: auto;
+    border-radius: 4px; margin: 1.6em 0;
+  }
+  .prose-content figure { margin: 1.6em 0; }
+  .prose-content figure img { margin: 0; }
+  .prose-content figcaption { margin-top: 0.65em; font-size: 0.8em; color: var(--stone); text-align: center; }
+
+  /* WooCommerce spec tables — horizontal scroll on narrow screens rather
+     than overflowing or forcing tiny illegible text; alternating rows for
+     scannability. */
+  .prose-content table {
+    display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    width: 100%; border-collapse: collapse; font-size: 0.92em;
+  }
+  .prose-content th, .prose-content td {
+    border: 1px solid var(--line); padding: 0.65em 1em; text-align: left; white-space: nowrap;
+  }
+  .prose-content th {
+    font-family: var(--font-sans), sans-serif; font-size: 0.82em; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--stone); background: var(--paper-2);
+  }
+  .prose-content tbody tr:nth-child(even) { background: var(--paper-2); }
+
+  .prose-content code {
+    font-family: var(--font-sans), sans-serif; background: var(--paper-2);
+    padding: 0.15em 0.4em; border-radius: 2px; font-size: 0.9em;
+  }
+  .prose-content pre { background: var(--paper-2); padding: 1em 1.2em; border-radius: 4px; overflow-x: auto; }
+  .prose-content pre code { background: none; padding: 0; }
+
+  /* Cascades after every element-specific margin-top rule above, so it
+     always wins the tie and the block never starts with extra internal
+     space on top of whatever margin its container already applies. */
+  .prose-content > :first-child { margin-top: 0; }
+}
+
+/* Hide scrollbar on horizontal rails while keeping function */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Product image load fade — see Frame.tsx. A CSS animation (not a
+   transition) deliberately, so it can't be won/overridden by whichever of
+   the caller's own opacity-related transition/hover classes happens to be
+   declared later in the compiled stylesheet — it only ever plays once, the
+   instant the "loaded" class is first applied, independent of any hover
+   transition on the same element. */
+@keyframes image-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-image-fade-in {
+  animation: image-fade-in 280ms ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-image-fade-in { animation: none; }
+}
+
+/* Dual-handle price range slider (PriceRangeSlider.tsx) — two overlaid
+   native <input type="range"> elements share one track; the track itself is
+   pointer-events:none (via the .price-slider-input class applied inline)
+   so only each input's own thumb is draggable, letting both handles move
+   independently despite occupying the same physical strip. */
+.price-slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: 20px; height: 20px;
+  border-radius: 9999px;
+  background: var(--ink);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--ink);
+  cursor: pointer;
+}
+.price-slider-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 20px; height: 20px;
+  border-radius: 9999px;
+  background: var(--ink);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--ink);
+  cursor: pointer;
+}
+.price-slider-input::-webkit-slider-runnable-track { -webkit-appearance: none; background: transparent; }
+.price-slider-input::-moz-range-track { background: transparent; border: none; }

@@ -1,0 +1,19 @@
+"use client";
+import { useEffect, useState } from "react";
+import { Card, Input, Button, Banner } from "@/components/admin/ui";
+import MediaPicker from "@/components/admin/MediaPicker";
+
+type Item = { categorySlug: string; customImage: string; enabled: boolean; displayOrder: number };
+const names: Record<string, string> = { "men-s": "Men's", "women-s": "Women's", premium: "Premium", accessories: "Accessories", unisex: "Unisex" };
+
+export default function AdminShopByCategoryPage() {
+  const [form, setForm] = useState({ enabled: true, title: "Shop by Category", subtitle: "Discover our collections", categories: [] as Item[] });
+  const [picker, setPicker] = useState<number | null>(null);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { fetch("/api/admin/shop-by-category").then(async (r) => { const data = await r.json(); if (!r.ok) throw new Error(data.error); return data; }).then((d) => d.item && setForm(d.item)).catch(() => setError("Unable to load Shop By Category settings.")); }, []);
+  function update(index: number, value: Partial<Item>) { setForm((f) => ({ ...f, categories: f.categories.map((item, i) => i === index ? { ...item, ...value } : item) })); }
+  function move(index: number, direction: -1 | 1) { const next = index + direction; if (next < 0 || next >= form.categories.length) return; const categories = [...form.categories]; [categories[index], categories[next]] = [categories[next], categories[index]]; setForm((f) => ({ ...f, categories: categories.map((item, i) => ({ ...item, displayOrder: i })) })); }
+  async function save() { setSaving(true); setError(""); try { const res = await fetch("/api/admin/shop-by-category", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) }); if (!res.ok) throw new Error((await res.json()).error); } catch (e) { setError(e instanceof Error ? e.message : "Could not save settings."); } finally { setSaving(false); } }
+  return <div className="space-y-5"><div><h1 className="text-[20px] font-semibold">Shop By Category</h1><p className="text-[12.5px] text-stone mt-1">Configure the homepage category cards.</p></div><Card><div className="space-y-4 max-w-2xl"><label className="flex items-center gap-2.5 text-[13px]"><input type="checkbox" checked={form.enabled} onChange={(e) => setForm((f) => ({ ...f, enabled: e.target.checked }))} className="w-4 h-4 accent-[var(--ink)]" /> Enabled</label><Input label="Title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /><Input label="Subtitle" value={form.subtitle} onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))} /><div className="space-y-2">{form.categories.map((item, i) => <div key={item.categorySlug} className="flex items-center gap-2 rounded-brand border border-line dark:border-[#332e26] p-2"><span className="w-24 text-[13px]">{names[item.categorySlug] ?? item.categorySlug}</span><input type="checkbox" checked={item.enabled} onChange={(e) => update(i, { enabled: e.target.checked })} className="w-4 h-4 accent-[var(--ink)]" /><Button type="button" variant="ghost" size="sm" onClick={() => setPicker(i)}>{item.customImage ? "Change image" : "Override image"}</Button><Button type="button" variant="ghost" size="sm" onClick={() => move(i, -1)} disabled={i === 0}>↑</Button><Button type="button" variant="ghost" size="sm" onClick={() => move(i, 1)} disabled={i === form.categories.length - 1}>↓</Button></div>)}</div>{picker !== null && <MediaPicker open onClose={() => setPicker(null)} onSelect={(url) => { update(picker, { customImage: url }); setPicker(null); }} />}{error && <Banner tone="error">{error}</Banner>}<Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button></div></Card></div>;
+}
